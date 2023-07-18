@@ -1,4 +1,4 @@
-const data=[{
+export const data=[{
     indicator_id:"7hMQiPdzsL2eJsotBz0PtVS6R5ZkXD0FbFFElmt6FLv18LE",
     indicator_name:"",
     direction:"",

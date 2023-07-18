@@ -136,7 +136,7 @@
         "@tldraw/tldraw": "^1.28.0",
         "@tuval/cg": "^0.0.16",
         "@tuval/core": "^0.0.102",
-        "@tuval/forms": "^1.0.1-beta.104",
+        "@tuval/forms": "^1.0.9",
         "@tuval/graphics": "^0.0.10",
         "css-loader": "^3.2.0",
         "d3-graphviz": "^4.0.0",
