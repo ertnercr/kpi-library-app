@@ -13,9 +13,6 @@ import { RiFileExcel2Fill } from 'react-icons/ri'
 import { BiSolidMessageRoundedAdd } from 'react-icons/bi'
 import { logo } from '../../assets/logo'
 import data from '../../assets/data'
-import '../../assets/fonts/Montserrat-Regular.ttf';
-import '../../assets/fonts/Poppins-Regular.ttf';
-import '../../assets/fonts/Roboto-Regular.ttf';
 export class Deneme extends UIController {
   public LoadView(): UIView {
     //-----------------------------------------Main Component
@@ -453,7 +450,7 @@ export class Deneme extends UIController {
                 >
                   <h4
                     style={{
-                      fontFamily: 'Montserrat',
+                      fontFamily: 'Poppins',
                       color: '#242F7F',
                       fontWeight: 'bold',
                       margin: '25px 0px 7px 0px',
@@ -488,6 +485,7 @@ export class Deneme extends UIController {
                       marginRight: '0',
                       color: '#273AB5',
                     }}
+                    allowHalf
                     defaultValue={item.puan}
                   />
                   <span
