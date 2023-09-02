@@ -25,10 +25,15 @@ import {
 } from 'react-icons/md'
 import { Space, Rate, Tag, Input } from 'antd'
 import Button from '@mui/material/Button'
+
 import { BiSolidMessageRoundedAdd } from 'react-icons/bi'
 import { RiFileExcel2Fill } from 'react-icons/ri'
 import { SenseiBrokerClient } from '../../api/KPILibaryBrokerClient'
 import { DownloadOutlined } from '@ant-design/icons'
+import Gosterge from '../../components/Gosterge'
+import { utils, writeFile } from 'xlsx';
+import {useSessionService} from "@realmocean/services"
+import {useOrgProvider } from "@realmocean/common";
 
 export class MainViewController extends UIController {
   @State()
@@ -46,9 +51,10 @@ export class MainViewController extends UIController {
     const [selectedIndex, setSelectedIndex] = useState(-1)
     const [selectAll, setSelectAll] = useState(false)
     const [filteredData, setFilteredData] = useState([])
-
+    const [data, setData] = useState([])
     const [searchBar, setSearchBar] = useState('')
-
+    const [gosterge,setGosterge]=useState(false)
+    const [admin,setAdmin]=useState(false)
     const { Search } = Input
 
     const handleSelectIndex = (index) => {
@@ -59,10 +65,80 @@ export class MainViewController extends UIController {
       setSearchBar(value)
     }
 
+    const actionSelectAll=()=>{
+
+      if(selectAll===false &&selectedIndex!=-1){
+        const category=categories[selectedIndex].category_name
+        const value=data.filter(item=>item.related_process===category)
+        setFilteredData(value)
+      } else{
+        setFilteredData(data)
+      }
+      
+      setSelectAll(!selectAll)
+    }
+    const action_download_excel=()=> {
+      var excel_data: any[] = [];
+      
+      filteredData.forEach((obj) => {
+          excel_data.push({
+              "indicator_name": obj.indicator_name,
+              "direction": obj.direction,
+              "measurement": obj.measurement,
+              "related_process": obj.related_process,
+              "related_other_process": obj.related_other_process,
+              "indicator_definition": obj.indicator_definition,
+              "indicator_tag": obj.indicator_tag,
+              "indicator_related_management_system": obj.indicator_related_management_system
+          })
+      })
+      
+      setTimeout(() => {
+          var worksheet = utils.json_to_sheet(excel_data);
+          var workbook = utils.book_new();
+          utils.book_append_sheet(workbook, worksheet, "KPIData");
+          const indicator_name = excel_data.reduce((w, r) => Math.max(w, r.indicator_name.length), 10);
+          const direction = excel_data.reduce((w, r) => Math.max(w, r.direction.length), 10);
+          const measurement = excel_data.reduce((w, r) => Math.max(w, r.measurement.length), 10);
+          const related_process = excel_data.reduce((w, r) => Math.max(w, r.related_process.length), 10);
+          const related_other_process = excel_data.reduce((w, r) => Math.max(w, r.related_other_process.length), 10);
+          const indicator_definition = excel_data.reduce((w, r) => Math.max(w, r.indicator_definition.length), 10);
+          const indicator_tag = excel_data.reduce((w, r) => Math.max(w, r.indicator_tag.length), 10);
+          const indicator_related_management_system = excel_data.reduce((w, r) => Math.max(w, r.indicator_related_management_system.length), 10);
+          worksheet["!cols"] = [{ wch: indicator_name }, { wch: direction }, { wch: measurement }, { wch: related_process }, { wch: related_other_process }, { wch: indicator_definition / 10 }, { wch: indicator_tag }, { wch: indicator_related_management_system }];
+          utils.sheet_add_aoa(worksheet, [["Gösterge Adı", "Yönü", "Ölçüm Birimi", "İlgili Süreç", "İlgili Diğer Süreçler", "Tanımı", "Etiket", "İlgili Yönetim Sistemi"]], { origin: "A1" });
+          writeFile(workbook, "KPILibraryByPedasoft.xlsx", { compression: true })
+      }, 100)
+  }
+
+
+    const selectCategoryName=(category_name:string)=>{
+
+      const category_data=data.filter(item=>
+        item.related_process==category_name
+      )
+        console.log(category_data,category_name)
+      setFilteredData(category_data)
+    }
+
+
+    const searchAction =(key:string,filteredText:string)=>{
+      let searchFilteredData=[]
+      setTimeout(()=>{
+          searchFilteredData=data.filter(item=>
+          item[key].toLowerCase().indexOf(filteredText.toLowerCase())>-1
+          )
+          setFilteredData(searchFilteredData)
+      },1500)
+    }
+
     useEffect(() => {
       SenseiBrokerClient.GetShowingKPIList().then((res) => {
         setFilteredData(res)
+        setData(res)
+
       })
+     
     }, [])
 
     return VStack(
@@ -72,6 +148,7 @@ export class MainViewController extends UIController {
             height: 'calc(100vh - 50px)',
             display: 'flex',
             width: '100%',
+            backgroundColor:gosterge? "rgba(0, 0, 0, 0.5)":" "
           }}
         >
           <div
@@ -128,7 +205,7 @@ export class MainViewController extends UIController {
                     right: '35px',
                   }}
                   onClick={() => {
-                    setSelectAll(!selectAll)
+                    actionSelectAll()
                   }}
                 >
                   {selectAll ? (
@@ -155,7 +232,8 @@ export class MainViewController extends UIController {
                 <Space style={{ marginLeft: '2%' }} direction="vertical">
                   {categories.map((category, index) => (
                     <div
-                      onClick={() => handleSelectIndex(index)}
+                      onClick={() => {handleSelectIndex(index),
+                      selectCategoryName(category.category_name)}}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -213,6 +291,12 @@ export class MainViewController extends UIController {
                   ))}
                 </Space>
               </div>
+                    {/* Admin Button */}  
+                      {useSessionService().IsTenantAdmin &&                              
+              <div style={{display:"flex",justifyContent:"flex-start",alignItems:"flex-end",width:"100%",height:"250px"}}>
+                <Button variant='contained'  style={{marginLeft:"15px",width:"140px",height:"37px",backgroundColor:"#F5C12E",textTransform:"none",boxShadow: "0 10px 12px rgba(0, 0, 0, 0.4)"}}>Admin Dashboard</Button>
+              </div>}
+              
             </div>
           </div>
 
@@ -248,13 +332,15 @@ export class MainViewController extends UIController {
               <Search
                 style={{ fontSize: '5px' }}
                 placeholder="Hızlı Arama"
-                onSearch={onSearch}
+                onSearch={(e)=>{
+                  searchAction("indicator_name",e)
+                }}
                 enterButton
                 allowClear
                 showCount={true}
-                size="middle"
+                size="large"
               />
-              {/*    <div
+                 <div
                     style={{
                       width: '12%',
                       display: 'flex',
@@ -262,27 +348,45 @@ export class MainViewController extends UIController {
                       justifyContent: 'center',
                       backgroundColor: '#C4DAA9',
                       color: '#2C7930',
-                      borderRadius: '16px',
+                      borderRadius: '8px',
                       fontFamily: 'Roboto',
                       marginLeft: '10px',
                       fontWeight: '600',
                     }}
+                    onClick={()=>action_download_excel()}
                   >
                     <RiFileExcel2Fill
                       style={{ fontSize: '20px', marginRight: '3px' }}
                     />
                     Excele Aktar
-                  </div> */}
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<BiSolidMessageRoundedAdd />}
-              >
-                Gösterge Öner
-                {/*   <Button size={size}>Default</Button> */}
-              </Button>
+                  </div>
+                  <div
+                    style={{
+                      width: '13%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: '#DDE1FB',
+                      color: '#273AB5',
+                      borderRadius: '8px',
+                      fontFamily: 'Roboto',
+                      marginLeft: '10px',
+                      fontWeight: '600',
+                      cursor:"pointer"
+                    }}
+                    onClick={()=>{setGosterge(!gosterge)}}
+                  >
+                    <BiSolidMessageRoundedAdd
+                      style={{
+                        fontSize: '22px',
+                        marginRight: '3px',
+                        color: '#1C4B95',
+                      }}
+                    />
+                    Gösterge Öner
+                  </div>
             </div>
-<div style={{display:"flex" ,flexDirection:"column" ,gap:"15px"}}>  {filteredData.map((item, index) => (
+<div style={{display:"flex",width:"100%" ,flexDirection:"column" ,gap:"15px"}}>  {filteredData.map((item, index) => (
               /*  <div
                       key={index}
                       style={{
@@ -566,6 +670,9 @@ export class MainViewController extends UIController {
             ))}</div>
           
           </div>
+          {gosterge &&
+          <Gosterge setGosterge={setGosterge}/>
+        }
         </div>
       )
     )

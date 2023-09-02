@@ -9,6 +9,9 @@ export const Routes = () => {
             UIRoute("main", MainController).children(
                 UIRoute("view", MainViewController)
             ),
+           /*  UIRoute("admin",AdminController).children(
+                UIRoute("view",AdminViewController)
+            ), */
             UIRoute("", MainViewController)
         ))
 
